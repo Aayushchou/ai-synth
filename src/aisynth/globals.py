@@ -1,1 +1,1 @@
-AUDIO_DIR_TEST = [{"audio_dir": r"resources/dx7"}]
+AUDIO_DIR_TEST = [{"audio_dir": r"test_resources/dx7"}]

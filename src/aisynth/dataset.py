@@ -1,12 +1,6 @@
-"""dataset.py:
-    Definition of the DX7 synth dataset is provided here.
-    The dataset consists of 4 second samples of different synth sounds.
-    Joseph Turian. (2021). Timbre Audio Dataset (DX7-clone synthesizer) (1.0.0) [Data set].
-    Zenodo. https://doi.org/10.5281/zenodo.4677102"""
 import os
 import torchaudio
 import pandas as pd
-import tempfile
 
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -15,7 +9,12 @@ from functools import cached_property
 
 
 class DX7SynthDataset(Dataset):
-
+    """
+    Definition of the DX7 synth dataset is provided here.
+    The dataset consists of 4 second samples of different synth sounds.
+    Joseph Turian. (2021). Timbre Audio Dataset (DX7-clone synthesizer) (1.0.0) [Data set].
+    Zenodo. https://doi.org/10.5281/zenodo.4677102
+    """
     def __init__(self, audio_dir, supported_formats=["ogg"]):
         """Initialise the dataset by providing the root path to the audio files."""
         super().__init__()
@@ -28,13 +27,16 @@ class DX7SynthDataset(Dataset):
 
     def __len__(self) -> int:
         """Return the length of the dataset, which is the number of samples we have"""
-        valid_samples = [file for file in os.listdir(self.audio_dir) if any(ext in file for ext in self.supported_formats)]
+        valid_samples = [file for file in os.listdir(self.audio_dir)
+                         if any(ext in file for ext in self.supported_formats)]
         return len(valid_samples)
 
     def __getitem__(self, index) -> Tuple[Tensor, Tensor]:
         """Returns a sample from the dataset, audio sample and sample rate would be sensible
         :param
             index: The index of the sample to be returned
+        :returns
+            A tuple of the same audio waveform, as we are creating an autoencoder
         """
         audio_sample_path = self.metadata.iloc[index, 2]
         signal, sr = torchaudio.load(audio_sample_path)
@@ -47,7 +49,10 @@ class DX7SynthDataset(Dataset):
         :param
             audio_dir: Directory with the audio files
             metadata_filename: File name of the output metadata file
-            supported_formats: Supported audio formats"""
+            supported_formats: Supported audio formats
+        :returns
+            A DataFrame containing file level and audio level metadata
+        """
         metadata_list = []
         for idx, file in enumerate(sorted(os.listdir(self.audio_dir))):
             if any(ext in file for ext in self.supported_formats):
@@ -64,7 +69,5 @@ class DX7SynthDataset(Dataset):
                 record_info["bits_per_sample"] = audio_metadata.bits_per_sample
                 record_info["encoding"] = audio_metadata.encoding
                 metadata_list.append(record_info)
-
         md = pd.DataFrame(metadata_list)
-
         return md

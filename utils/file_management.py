@@ -1,9 +1,10 @@
+"""Utility module for handling file management and copy/pasting of the dataset into appropriate folders"""
 import os
 import shutil
 import random
 
 
-def sample_file_and_move(parent_dir, out_dir, n_files=1):
+def sample_file_and_move(parent_dir: str, out_dir: str, n_files: int = 1) -> None:
     """Takes n number of files from all subdirectories within a given parent folder and copies to output director
     :param
         parent_dir: Directory containing all the subdirectories

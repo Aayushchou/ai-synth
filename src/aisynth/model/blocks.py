@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch
 
 
 class ResidualBlock1D(nn.Module):
@@ -43,7 +42,7 @@ class ResidualBlock1D(nn.Module):
         return x + self.scale * self.block(x)
 
 
-class EncoderBlock(nn.Module):
+class EncoderBlock1D(nn.Module):
 
     def __init__(self):
         super().__init__()
@@ -52,7 +51,7 @@ class EncoderBlock(nn.Module):
         pass
 
 
-class DecoderBlock(nn.Module):
+class DecoderBlock1D(nn.Module):
 
     def __init__(self):
         super().__init__()

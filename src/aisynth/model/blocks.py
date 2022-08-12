@@ -2,7 +2,20 @@ import torch.nn as nn
 
 
 class ResidualBlock1D(nn.Module):
-
+    """Convolutional block with a residual architecture in 1D. Used in the encoder and decoders.
+    :param
+        n_in -- number of input channels
+        n_hidden -- number of hidden channels
+        stride -- stride for the first convolutional layer
+        padding -- padding for the first convolutional layer
+        dilation -- dilation for the first convolutional layer
+        scale -- scaling the model outputs to provide control over input/latent representation
+        zero_out -- whether to output zeros
+        dropout_flag -- including dropout in the block for regularisation
+        dropout_val -- how much drop out to add
+        batchnorm_flag -- whether to add batch normalisation
+    : returns
+        nn.Module object"""
     def __init__(self,
                  n_in,
                  n_hidden,
@@ -13,25 +26,26 @@ class ResidualBlock1D(nn.Module):
                  dropout_flag=False,
                  dropout_val=0.3,
                  batchnorm_flag=False):
+        """Setting up convolutional layers and normalisation based on parameters. """
         super().__init__()
         self.scale = scale
         self.dropout_flag = dropout_flag
         self.batchnorm_flag = batchnorm_flag
 
         padding = dilation
-        layers = [
+        self.layers = [
             nn.ReLU(),
             nn.Conv1d(n_in, n_hidden, 3, stride=stride, padding=padding, dilation=dilation),
             nn.ReLU(),
             nn.Conv1d(n_hidden, n_in, 1, stride=1, padding=0)
         ]
         if batchnorm_flag:
-            layers.insert(0, nn.BatchNorm1d(n_in))
+            self.layers.insert(0, nn.BatchNorm1d(n_in))
 
         if dropout_flag:
-            layers.insert(-1, nn.Dropout(dropout_val))
+            self.layers.insert(-1, nn.Dropout(dropout_val))
 
-        self.block = nn.Sequential(*layers)
+        self.block = nn.Sequential(*self.layers)
 
         if zero_out:
             out = self.block[-1]
@@ -39,6 +53,7 @@ class ResidualBlock1D(nn.Module):
             nn.init.zeros_(out.bias)
 
     def forward(self, x):
+        """ Residual forward pass, input vector plus scaled hidden vector"""
         return x + self.scale * self.block(x)
 
 

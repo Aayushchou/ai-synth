@@ -1,6 +1,6 @@
 import pytest
 from aisynth.globals import TEST_INPUTS
-from aisynth.dataset import DX7SynthDataset
+from aisynth.data.dataset import DX7SynthDataset
 
 
 class TestSynthDX7Dataset:

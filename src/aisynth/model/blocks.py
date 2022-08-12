@@ -1,7 +1,8 @@
 import torch.nn as nn
+import math
 
 
-class ResidualBlock1D(nn.Module):
+class ConvBlock1D(nn.Module):
     """Convolutional block with a residual architecture in 1D. Used in the encoder and decoders.
     :param
         n_in -- number of input channels
@@ -55,6 +56,42 @@ class ResidualBlock1D(nn.Module):
     def forward(self, x):
         """ Residual forward pass, input vector plus scaled hidden vector"""
         return x + self.scale * self.block(x)
+
+
+class ResidualBlock1D(nn.Module):
+
+    def __init__(self,
+                 n_in,
+                 n_depth,
+                 dilation_growth_rate=1,
+                 dilation_cycle=None,
+                 zero_out=False,
+                 dropout_val: int = 0,
+                 m_conv=1.0,
+                 scale=False,
+                 reverse_dilation=False):
+        super().__init__()
+        self.dilation_cycle = dilation_cycle
+        self.blocks = [ConvBlock1D(n_in=n_in,
+                                   n_hidden=int(m_conv * n_in),
+                                   dilation=dilation_growth_rate ** self._get_depth(depth),
+                                   zero_out=zero_out,
+                                   dropout_flag=False if dropout_val == 0 else True,
+                                   dropout_val=dropout_val,
+                                   scale=1.0 if not scale else 1.0 / math.sqrt(n_depth))
+                       for depth in n_depth]
+
+        if reverse_dilation:
+            self.blocks = self.blocks[::-1]
+
+        self.resnet = nn.Sequential(*self.blocks)
+
+    def _get_depth(self, depth):
+        return depth if self.dilation_cycle is None else depth % self.dilation_cycle
+
+    def forward(self, x):
+        # WATCH OUT FOR THIS addition, its what should be happening according to the diagram but isn't
+        return x + self.resnet(x)
 
 
 class EncoderBlock1D(nn.Module):

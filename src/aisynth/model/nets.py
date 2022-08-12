@@ -1,4 +1,5 @@
 import torch.nn as nn
+from aisynth.model.blocks import ResidualBlock1D
 
 
 class Encoder(nn.Module):

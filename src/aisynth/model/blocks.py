@@ -27,6 +27,7 @@ class ConvBlock1D(nn.Module):
                 block: Module object with user defined layers
 
     """
+
     def __init__(self,
                  n_in: int,
                  n_hidden: int,
@@ -89,6 +90,7 @@ class ResidualBlock1D(nn.Module):
                 resnet: torch sequential module for the resnet
 
     """
+
     def __init__(self,
                  n_in: int,
                  n_depth: int,
@@ -128,18 +130,90 @@ class ResidualBlock1D(nn.Module):
 
 class EncoderBlock1D(nn.Module):
 
-    def __init__(self):
+    def __init__(self,
+                 input_emb_width,
+                 output_emb_width,
+                 down_t,
+                 stride_t,
+                 width,
+                 depth,
+                 m_conv,
+                 dilation_growth_rate=1,
+                 dilation_cycle=False,
+                 zero_out=False,
+                 res_scale=False,
+                 dropout=0.0):
         super().__init__()
+        filter_t, pad_t = stride_t * 2, stride_t // 2
+        assert down_t > 0, f"Please ensure that the value of down_t is greater than 0"
+        blocks = [nn.Sequential(nn.Conv1d(input_emb_width if i == 0 else width,
+                                          width,
+                                          filter_t,
+                                          stride_t,
+                                          pad_t),
+                                ResidualBlock1D(n_in=width,
+                                                n_depth=depth,
+                                                m_conv=m_conv,
+                                                dilation_growth_rate=dilation_growth_rate,
+                                                dilation_cycle=dilation_cycle,
+                                                zero_out=zero_out,
+                                                scale=res_scale,
+                                                dropout_val=dropout))
+                  for i in range(down_t)]
+        final_block = nn.Conv1d(width,
+                                output_emb_width,
+                                (3,),
+                                (1,),
+                                (1,))
+        blocks.append(final_block)
+        self.encoder_block = nn.Sequential(*blocks)
 
-    def forward(self):
-        pass
+    def forward(self, x):
+        return self.encoder_block(x)
 
 
 class DecoderBlock1D(nn.Module):
 
-    def __init__(self):
+    def __init__(self,
+                 input_emb_width,
+                 output_emb_width,
+                 down_t,
+                 stride_t,
+                 width,
+                 depth,
+                 m_conv,
+                 dilation_growth_rate=1,
+                 dilation_cycle=False,
+                 zero_out=False,
+                 res_scale=False,
+                 dropout=0.0,
+                 reverse_dilation=False):
         super().__init__()
+        filter_t, pad_t = stride_t * 2, stride_t // 2
+        assert down_t > 0, f"Please ensure that the value of down_t is greater than 0"
+        blocks = [nn.Sequential(ResidualBlock1D(n_in=width,
+                                                n_depth=depth,
+                                                m_conv=m_conv,
+                                                dilation_growth_rate=dilation_growth_rate,
+                                                dilation_cycle=dilation_cycle,
+                                                zero_out=zero_out,
+                                                scale=res_scale,
+                                                dropout_val=dropout,
+                                                reverse_dilation=reverse_dilation),
+                                nn.ConvTranspose1d(width,
+                                                   input_emb_width if i == (down_t - 1) else width,
+                                                   filter_t,
+                                                   stride_t,
+                                                   pad_t),
+                                )
+                  for i in range(down_t)]
+        first_block = nn.Conv1d(output_emb_width,
+                                width,
+                                (3,),
+                                (1,),
+                                (1,))
+        blocks.insert(0, first_block)
+        self.decoder_block = nn.Sequential(*blocks)
 
-    def forward(self):
-        pass
-
+    def forward(self, x):
+        return self.decoder_block(x)

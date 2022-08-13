@@ -65,7 +65,6 @@ class TestEncoderDecoder:
                             zero_out=inputs["zero_out"],
                             res_scale=inputs["res_scale"],
                             dropout=inputs["dropout"],
-                            batchnorm_flag=inputs["batchnorm_flag"],
                             reverse_dilation=inputs["reverse_dilation"])
         model = nn.Sequential(eb, db)
         out = model.forward(inputs["test_tensor"])

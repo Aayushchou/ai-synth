@@ -129,27 +129,45 @@ class ResidualBlock1D(nn.Module):
 
 
 class EncoderBlock1D(nn.Module):
+    """Block for encoding an input audio signal into a latent embedding using resnets.
 
+        params:
+            input_emb_width: width of input audio
+            output_emb_width: dimensions of the embedding layer
+            down_t: Number of encoder blocks
+            stride_t: stride of the conv1d layer before the resnet block
+            width: width of the resnet blocks
+            depth: number of resnet blocks
+            m_conv: scaling factor to modify convolutional channels
+            dilation_growth_rate: factor for growing the convolution dilation rate,
+            dilation_cycle: integer to modulate the dilation factor around,
+            zero_out: whether to zero out encoder outputs,
+            res_scale: whether to scale residual outputs,
+            dropout: dropout value for regularisation
+
+        attrs:
+            encoder_block: Model consisting of encoder blocks
+    """
     def __init__(self,
-                 input_emb_width,
-                 output_emb_width,
-                 down_t,
-                 stride_t,
-                 width,
-                 depth,
-                 m_conv,
-                 dilation_growth_rate=1,
-                 dilation_cycle=False,
-                 zero_out=False,
-                 res_scale=False,
-                 dropout=0.0):
+                 input_emb_width: int,
+                 output_emb_width: int,
+                 down_t: int,
+                 stride_t: int,
+                 width: int,
+                 depth: int,
+                 m_conv: float,
+                 dilation_growth_rate: int = 1,
+                 dilation_cycle: bool = False,
+                 zero_out: bool = False,
+                 res_scale: bool = False,
+                 dropout: float = 0.0):
         super().__init__()
         filter_t, pad_t = stride_t * 2, stride_t // 2
         assert down_t > 0, f"Please ensure that the value of down_t is greater than 0"
         blocks = [nn.Sequential(nn.Conv1d(input_emb_width if i == 0 else width,
                                           width,
-                                          filter_t,
-                                          stride_t,
+                                          (filter_t,),
+                                          (stride_t,),
                                           pad_t),
                                 ResidualBlock1D(n_in=width,
                                                 n_depth=depth,
@@ -173,21 +191,40 @@ class EncoderBlock1D(nn.Module):
 
 
 class DecoderBlock1D(nn.Module):
+    """Block for decoding latent embedding back to an input audio signal using resnets and convolution transpose.
 
+        params:
+            input_emb_width: width of input audio
+            output_emb_width: dimensions of the embedding layer
+            down_t: Number of encoder blocks
+            stride_t: stride of the conv1d layer before the resnet block
+            width: width of the resnet blocks
+            depth: number of resnet blocks
+            m_conv: scaling factor to modify convolutional channels
+            dilation_growth_rate: factor for growing the convolution dilation rate,
+            dilation_cycle: integer to modulate the dilation factor around,
+            zero_out: whether to zero out encoder outputs,
+            res_scale: whether to scale residual outputs,
+            dropout: dropout value for regularisation
+            reverse_dilation: whether to reverse the order of dilation growth
+
+        attrs:
+            decoder_block: Model consisting of encoder blocks
+    """
     def __init__(self,
-                 input_emb_width,
-                 output_emb_width,
-                 down_t,
-                 stride_t,
-                 width,
-                 depth,
-                 m_conv,
-                 dilation_growth_rate=1,
-                 dilation_cycle=False,
-                 zero_out=False,
-                 res_scale=False,
-                 dropout=0.0,
-                 reverse_dilation=False):
+                 input_emb_width: int,
+                 output_emb_width: int,
+                 down_t: int,
+                 stride_t: int,
+                 width: int,
+                 depth: int,
+                 m_conv: float,
+                 dilation_growth_rate: int = 1,
+                 dilation_cycle: bool = False,
+                 zero_out: bool = False,
+                 res_scale: bool = False,
+                 dropout: float = 0.0,
+                 reverse_dilation: bool = False):
         super().__init__()
         filter_t, pad_t = stride_t * 2, stride_t // 2
         assert down_t > 0, f"Please ensure that the value of down_t is greater than 0"
@@ -202,9 +239,9 @@ class DecoderBlock1D(nn.Module):
                                                 reverse_dilation=reverse_dilation),
                                 nn.ConvTranspose1d(width,
                                                    input_emb_width if i == (down_t - 1) else width,
-                                                   filter_t,
-                                                   stride_t,
-                                                   pad_t),
+                                                   (filter_t,),
+                                                   (stride_t,),
+                                                   (pad_t,)),
                                 )
                   for i in range(down_t)]
         first_block = nn.Conv1d(output_emb_width,

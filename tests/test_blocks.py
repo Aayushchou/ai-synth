@@ -11,16 +11,14 @@ class TestConvBlock:
         """Tests initialisation and whether the correct amount of layers are being built"""
         rb = ConvBlock1D(n_in=inputs["n_in"],
                          n_hidden=inputs["n_hidden"],
-                         batchnorm_flag=inputs["batchnorm_flag"],
                          dropout_flag=inputs["dropout_flag"])
-        assert len(rb.layers) in [4, 6]
+        assert len(rb.layers) in [4, 5]
 
     @pytest.mark.parametrize("inputs", TEST_INPUTS["CONVBLOCK_TEST"])
     def test_forward(self, inputs):
         """Tests forward function and whether the output is of the shape we expect"""
         rb = ConvBlock1D(n_in=inputs["n_in"],
                          n_hidden=inputs["n_hidden"],
-                         batchnorm_flag=inputs["batchnorm_flag"],
                          dropout_flag=inputs["dropout_flag"])
 
         out = rb.forward(inputs["test_tensor"])

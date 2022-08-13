@@ -133,3 +133,4 @@ class TestDecoderBlock:
 
         out = db.forward(inputs["test_tensor"])
         assert out.shape[0] == inputs["input_emb_width"]
+

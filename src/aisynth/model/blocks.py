@@ -51,8 +51,6 @@ class ConvBlock1D(nn.Module):
             nn.ReLU(),
             nn.Conv1d(n_hidden, n_in, (1,), stride=(1,), padding=0)
         ]
-        if batchnorm_flag:
-            self.layers.insert(0, nn.BatchNorm1d(n_in))
 
         if dropout_flag:
             self.layers.insert(-1, nn.Dropout(dropout_val))
@@ -66,6 +64,7 @@ class ConvBlock1D(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """ Residual forward pass, input vector plus scaled hidden vector"""
+
         return x + self.scale * self.block(x)
 
 
@@ -100,6 +99,7 @@ class ResidualBlock1D(nn.Module):
                  dropout_val: float = 0.0,
                  m_conv: float = 1.0,
                  scale: bool = False,
+                 batchnorm_flag: bool = False,
                  reverse_dilation: bool = False):
         """Defines list of residual convolutional blocks for the network. """
         super().__init__()
@@ -110,6 +110,7 @@ class ResidualBlock1D(nn.Module):
                                    zero_out=zero_out,
                                    dropout_flag=False if dropout_val == 0.0 else True,
                                    dropout_val=dropout_val,
+                                   batchnorm_flag=batchnorm_flag,
                                    scale=1.0 if not scale else 1.0 / math.sqrt(n_depth))
                        for depth in range(n_depth)]
 
@@ -141,6 +142,7 @@ class EncoderBlock1D(nn.Module):
             m_conv: scaling factor to modify convolutional channels
             dilation_growth_rate: factor for growing the convolution dilation rate,
             dilation_cycle: integer to modulate the dilation factor around,
+            batchnorm_flag: whether to apply batch normalization
             zero_out: whether to zero out encoder outputs,
             res_scale: whether to scale residual outputs,
             dropout: dropout value for regularisation
@@ -158,6 +160,7 @@ class EncoderBlock1D(nn.Module):
                  m_conv: float,
                  dilation_growth_rate: int = 1,
                  dilation_cycle: bool = False,
+                 batchnorm_flag: bool = False,
                  zero_out: bool = False,
                  res_scale: bool = False,
                  dropout: float = 0.0):
@@ -166,9 +169,9 @@ class EncoderBlock1D(nn.Module):
         assert down_t > 0, f"Please ensure that the value of down_t is greater than 0"
         blocks = [nn.Sequential(nn.Conv1d(input_emb_width if i == 0 else width,
                                           width,
-                                          (filter_t,),
-                                          (stride_t,),
-                                          pad_t),
+                                          (filter_t, ),
+                                          (stride_t, ),
+                                          (pad_t, )),
                                 ResidualBlock1D(n_in=width,
                                                 n_depth=depth,
                                                 m_conv=m_conv,
@@ -176,6 +179,7 @@ class EncoderBlock1D(nn.Module):
                                                 dilation_cycle=dilation_cycle,
                                                 zero_out=zero_out,
                                                 scale=res_scale,
+                                                batchnorm_flag=batchnorm_flag,
                                                 dropout_val=dropout))
                   for i in range(down_t)]
         final_block = nn.Conv1d(width,
@@ -203,6 +207,7 @@ class DecoderBlock1D(nn.Module):
             m_conv: scaling factor to modify convolutional channels
             dilation_growth_rate: factor for growing the convolution dilation rate,
             dilation_cycle: integer to modulate the dilation factor around,
+            batchnorm_flag: whether to apply batch normalization
             zero_out: whether to zero out encoder outputs,
             res_scale: whether to scale residual outputs,
             dropout: dropout value for regularisation
@@ -221,6 +226,7 @@ class DecoderBlock1D(nn.Module):
                  m_conv: float,
                  dilation_growth_rate: int = 1,
                  dilation_cycle: bool = False,
+                 batchnorm_flag: bool = False,
                  zero_out: bool = False,
                  res_scale: bool = False,
                  dropout: float = 0.0,
@@ -235,6 +241,7 @@ class DecoderBlock1D(nn.Module):
                                                 dilation_cycle=dilation_cycle,
                                                 zero_out=zero_out,
                                                 scale=res_scale,
+                                                batchnorm_flag=batchnorm_flag,
                                                 dropout_val=dropout,
                                                 reverse_dilation=reverse_dilation),
                                 nn.ConvTranspose1d(width,

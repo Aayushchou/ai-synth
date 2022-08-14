@@ -30,7 +30,6 @@ class ConvBlock1D(nn.Module):
     def __init__(self,
                  n_in: int,
                  n_hidden: int,
-                 stride: int = 1,
                  dilation: int = 1,
                  scale: float = 1.0,
                  zero_out: bool = False,
@@ -45,9 +44,9 @@ class ConvBlock1D(nn.Module):
         padding = dilation
         self.layers = [
             nn.ReLU(),
-            nn.Conv1d(n_in, n_hidden, (3,), stride=(stride,), padding=padding, dilation=(dilation,)),
+            nn.Conv1d(n_in, n_hidden, (3,), stride=(1,), padding=padding, dilation=(dilation,)),
             nn.ReLU(),
-            nn.Conv1d(n_hidden, n_in, (1,), stride=(1,), padding=0)
+            nn.Conv1d(n_hidden, n_in, (1,), (1,), 0)
         ]
 
         if dropout_flag:
@@ -120,7 +119,6 @@ class ResidualBlock1D(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """forward pass through the model"""
-        # WATCH OUT FOR THIS ADDITION
         return x + self.resnet(x)
 
 
@@ -182,7 +180,7 @@ class EncoderBlock1D(nn.Module):
         blocks.append(final_block)
         self.encoder_block = nn.Sequential(*blocks)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.encoder_block(x)
 
 
@@ -249,5 +247,5 @@ class DecoderBlock1D(nn.Module):
         blocks.insert(0, first_block)
         self.decoder_block = nn.Sequential(*blocks)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.decoder_block(x)

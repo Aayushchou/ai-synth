@@ -11,7 +11,7 @@ class TestSynthDX7Dataset:
     def test_init(self, inputs):
         """Tests initialisation and whether the metadata is generated appropriately"""
         dx = DX7SynthDataset(audio_dir=inputs["audio_dir"])
-        assert dx.metadata.shape == (3, 9)
+        assert dx.metadata.shape == (8, 9)
 
     @pytest.mark.parametrize("inputs", TEST_INPUTS["AUDIO_DIR_TEST"])
     def test_len(self, inputs):

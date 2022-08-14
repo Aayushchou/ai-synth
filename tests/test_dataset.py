@@ -22,7 +22,7 @@ class TestSynthDX7Dataset:
     @pytest.mark.parametrize("inputs", TEST_INPUTS["AUDIO_DIR_TEST"])
     def test_get_items(self, inputs):
         """Tests whether we are able to extract items appropriately. """
-        dx = DX7SynthDataset(audio_dir=inputs["audio_dir"])
+        dx = DX7SynthDataset(audio_dir=inputs["audio_dir"], duration=inputs["duration"])
         item_7 = dx[1]
-        assert item_7[0].shape == item_7[1].shape
-        assert item_7[0].shape == (1, 176400)
+        assert item_7[0].shape == (1, int(item_7[1]*inputs["duration"]))
+

@@ -4,8 +4,10 @@ import pandas as pd
 
 from torch import Tensor
 from torch.utils.data import Dataset
-from typing import Tuple
+from typing import Tuple, Callable
 from functools import cached_property
+
+from aisynth.data.preprocess import resample
 
 
 class DX7SynthDataset(Dataset):
@@ -15,11 +17,19 @@ class DX7SynthDataset(Dataset):
     Joseph Turian. (2021). Timbre Audio Dataset (DX7-clone synthesizer) (1.0.0) [Data set].
     Zenodo. https://doi.org/10.5281/zenodo.4677102
     """
-    def __init__(self, audio_dir, supported_formats=["ogg"]):
+    def __init__(self,
+                 audio_dir: str,
+                 supported_formats: Tuple[str] = ("ogg",),
+                 duration: float = None,
+                 target_sr: int = 22500,
+                 transformation: Callable[[Tensor, int], Tensor] = None):
         """Initialise the dataset by providing the root path to the audio files."""
         super().__init__()
         self.audio_dir = audio_dir
         self.supported_formats = supported_formats
+        self.transformation = transformation
+        self.duration = duration
+        self.target_sr = target_sr
 
     @cached_property
     def metadata(self):
@@ -31,7 +41,7 @@ class DX7SynthDataset(Dataset):
                          if any(ext in file for ext in self.supported_formats)]
         return len(valid_samples)
 
-    def __getitem__(self, index) -> Tuple[Tensor, Tensor]:
+    def __getitem__(self, index) -> Tuple[Tensor, int]:
         """Returns a sample from the dataset, audio sample and sample rate would be sensible
         :param
             index: The index of the sample to be returned
@@ -40,8 +50,20 @@ class DX7SynthDataset(Dataset):
         """
         audio_sample_path = self.metadata.iloc[index, 2]
         signal, sr = torchaudio.load(audio_sample_path)
+        signal, sr = self._transform_audio(signal, sr)
 
-        return signal, signal
+        return signal, sr
+
+    def _transform_audio(self, signal: Tensor, sr: int) -> Tuple[Tensor, int]:
+        if sr != self.target_sr:
+            signal = resample(signal, sr, self.target_sr)
+            sr = self.target_sr
+        if self.transformation:
+            signal = self.transformation(signal, sr)
+        if self.duration:
+            cut_point = int(self.duration * sr)
+            signal = signal[:, :cut_point]
+        return signal, sr
 
     def _generate_metadata(self) -> pd.DataFrame:
         """Utility function to create metadata for the audio file directory.

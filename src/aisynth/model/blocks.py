@@ -190,7 +190,7 @@ class EncoderBlock1D(nn.Module):
         blocks.append(final_block)
         self.encoder_block = nn.Sequential(*blocks)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.encoder_block(x)
 
 
@@ -259,5 +259,5 @@ class DecoderBlock1D(nn.Module):
         blocks.insert(0, first_block)
         self.decoder_block = nn.Sequential(*blocks)
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         return self.decoder_block(x)

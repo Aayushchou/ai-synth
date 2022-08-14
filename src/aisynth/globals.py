@@ -1,6 +1,7 @@
 from torch import rand
 
-TEST_INPUTS = {"AUDIO_DIR_TEST": [{"audio_dir": r"test_resources/dx7"}],
+TEST_INPUTS = {"AUDIO_DIR_TEST": [{"audio_dir": r"test_resources/dx7",
+                                   "duration": 1.0}],
                "CONVBLOCK_TEST": [{"n_in": 10,
                                    "n_hidden": 10,
                                    "batchnorm_flag": False,

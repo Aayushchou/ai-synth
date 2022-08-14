@@ -13,10 +13,6 @@ def norm(x):
     return (x.view(x.shape[0], -1) ** 2).sum(dim=-1).sqrt()
 
 
-def multi_spectral_loss(x_in, x_out, **kwargs):
-    pass
-
-
 def loss_fn(func_choice, x_target, x_pred):
     if func_choice == 'l1':
         return torch.mean(torch.abs(x_pred - x_target))

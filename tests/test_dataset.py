@@ -17,7 +17,7 @@ class TestSynthDX7Dataset:
     def test_len(self, inputs):
         """Tests length of the dataset and whether it matches what we expect"""
         dx = DX7SynthDataset(audio_dir=inputs["audio_dir"])
-        assert len(dx) == 3
+        assert len(dx) == 8
 
     @pytest.mark.parametrize("inputs", TEST_INPUTS["AUDIO_DIR_TEST"])
     def test_get_items(self, inputs):

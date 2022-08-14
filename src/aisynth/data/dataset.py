@@ -4,6 +4,7 @@ import pandas as pd
 
 from torch import Tensor
 from torch.utils.data import Dataset
+import torch.nn.functional as F
 from typing import Tuple, Callable
 from functools import cached_property
 
@@ -51,10 +52,20 @@ class DX7SynthDataset(Dataset):
         audio_sample_path = self.metadata.iloc[index, 2]
         signal, sr = torchaudio.load(audio_sample_path)
         signal, sr = self._transform_audio(signal, sr)
-
         return signal, sr
 
     def _transform_audio(self, signal: Tensor, sr: int) -> Tuple[Tensor, int]:
+        """Function for pre-processing and transforming audio to the desired state.
+                params:
+                    signal: The input audio
+                    sr: The input sample rate
+                procedure:
+                    1. resamples audio to the target sample rate
+                    2. transforms audio based on given audio transformation.
+                    3. changes audio duration based on the duration input.
+                    4. right pads audio if necessary
+                returns:
+                    processed audio and sample rate."""
         if sr != self.target_sr:
             signal = resample(signal, sr, self.target_sr)
             sr = self.target_sr
@@ -63,7 +74,16 @@ class DX7SynthDataset(Dataset):
         if self.duration:
             cut_point = int(self.duration * sr)
             signal = signal[:, :cut_point]
+
+        signal = self._fix_length(signal)
         return signal, sr
+
+    def _fix_length(self, signal: Tensor) -> Tensor:
+        """right pad audio to the desired length."""
+        if signal.shape[1] < self.target_sr:
+            missing_vals = int(self.target_sr*self.duration) - signal.shape[1]
+            signal = F.pad(signal, (0, missing_vals))
+        return signal
 
     def _generate_metadata(self) -> pd.DataFrame:
         """Utility function to create metadata for the audio file directory.

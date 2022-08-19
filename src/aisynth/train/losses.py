@@ -15,5 +15,3 @@ def norm(x):
 
 def l1_loss(x_target, x_pred, **kwargs) -> torch.Tensor:
     return torch.mean(torch.abs(x_pred - x_target), **kwargs)
-
-

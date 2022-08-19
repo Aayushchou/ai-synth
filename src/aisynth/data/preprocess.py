@@ -6,5 +6,3 @@ def resample(signal: torch.Tensor, sr: int, target_sr: int, **kwargs) -> torch.T
     resampler = T.Resample(sr, target_sr, **kwargs)
     signal = resampler(signal)
     return signal
-
-

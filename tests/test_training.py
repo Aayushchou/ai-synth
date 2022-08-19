@@ -4,9 +4,10 @@ from torch.optim import Adam
 
 from aisynth.train.train import Trainer
 from aisynth.data.dataset import DX7SynthDataset
-from aisynth.utils.losses import l1_loss
-from aisynth.model.blocks import EncoderBlock1D, DecoderBlock1D
-from aisynth.train.one_epoch import simple_train_loop
+from aisynth.model.autoencoder import EncoderBlock1D, DecoderBlock1D
+from aisynth.train.train_loop import simple_train_loop
+from aisynth.model.quantizer import VectorQuantizer
+from aisynth.train.losses import l1_loss
 from aisynth.globals import TEST_INPUTS
 
 
@@ -50,7 +51,7 @@ class TestTraining:
                           optimizer=optimizer,
                           n_epochs=inputs["n_epochs"],
                           criterion=l1_loss,
-                          epoch_func=simple_train_loop)
+                          train_loop=simple_train_loop)
         print(trainer.__dict__)
 
     @pytest.mark.parametrize("inputs", TEST_INPUTS["TRAIN_TEST"])
@@ -91,7 +92,7 @@ class TestTraining:
                           optimizer=optimizer,
                           n_epochs=inputs["n_epochs"],
                           criterion=l1_loss,
-                          epoch_func=simple_train_loop)
+                          train_loop=simple_train_loop)
         trainer.fit()
         test_out = trainer.forward(sample_dataset[1][0])
         loss = l1_loss(test_out, sample_dataset[1][0])

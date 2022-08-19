@@ -1,7 +1,15 @@
 import pytest
 import torch.nn as nn
-from aisynth.globals import TEST_INPUTS
-from aisynth.model.blocks import EncoderBlock1D, DecoderBlock1D
+from torch import rand
+from torch.optim import Adam
+
+from aisynth.globals import TEST_INPUTS, VQVAE_CONFIG
+from aisynth.model.autoencoder import EncoderBlock1D, DecoderBlock1D
+from aisynth.model.vqvae import VQVAE
+from aisynth.data.dataset import DX7SynthDataset
+from aisynth.train.train import Trainer
+from aisynth.train.losses import l1_loss
+from aisynth.train.train_loop import simple_vqvae_loop
 
 
 class TestEncoderDecoder:
@@ -70,3 +78,34 @@ class TestEncoderDecoder:
         out = model.forward(inputs["test_tensor"])
 
         assert out.shape == inputs["test_tensor"].shape
+
+
+class TestFullVQVAE:
+    @pytest.mark.parametrize("inputs", [VQVAE_CONFIG])
+    def test_init(self, inputs):
+        """Tests the decoder function initialisation ensuring right architecture"""
+        vqvae = VQVAE(autoencoder_args=inputs["autoencoder_args"],
+                      quantizer_args=inputs["quantizer_args"])
+
+    @pytest.mark.parametrize("inputs", [VQVAE_CONFIG])
+    def test_forward(self, inputs):
+        """Tests the forward function to ensure correct output shapes"""
+        vqvae = VQVAE(autoencoder_args=inputs["autoencoder_args"],
+                      quantizer_args=inputs["quantizer_args"])
+        output, embeds, embed_loss, fit = vqvae(rand(8, 1, 2048))
+        assert output.shape == (8, 1, 2048)
+
+    @pytest.mark.parametrize("inputs", [VQVAE_CONFIG])
+    def test_fit(self, inputs):
+        vqvae = VQVAE(autoencoder_args=inputs["autoencoder_args"],
+                      quantizer_args=inputs["quantizer_args"])
+        sample_dataset = DX7SynthDataset(audio_dir=inputs["training_args"]["train_path"], duration=1.0)
+        optimizer = Adam(vqvae.parameters())
+        trainer = Trainer(model=vqvae,
+                          train_dataset=sample_dataset,
+                          device=inputs["training_args"]["device"],
+                          optimizer=optimizer,
+                          criterion=l1_loss,
+                          n_epochs=inputs["training_args"]["n_epochs"],
+                          train_loop=simple_vqvae_loop)
+        trainer.fit()

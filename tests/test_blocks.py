@@ -1,6 +1,6 @@
 import pytest
 from aisynth.globals import TEST_INPUTS
-from aisynth.model.blocks import ConvBlock1D, ResidualBlock1D, EncoderBlock1D, DecoderBlock1D
+from aisynth.model.autoencoder import ConvBlock1D, ResidualBlock1D, EncoderBlock1D, DecoderBlock1D
 
 
 class TestConvBlock:

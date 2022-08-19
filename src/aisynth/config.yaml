@@ -1,0 +1,25 @@
+---
+autoencoder_args:
+  input_emb_width: 1
+  output_emb_width: &emb_dim 64
+  down_t: 2
+  stride_t: 2
+  width: 64
+  depth: 4
+  m_conv: 1
+  dilation_growth_rate: 3
+  dilation_cycle: null
+  zero_out: False
+  res_scale: False
+  dropout: 0.0
+  reverse_dilation: True
+
+quantizer_args:
+  commit_cost: 1.0
+  emb_width: *emb_dim
+  n_bins: 64
+
+training_args:
+  train_path: "test_resources/dx7"
+  n_epochs: 2
+  device: "cpu"

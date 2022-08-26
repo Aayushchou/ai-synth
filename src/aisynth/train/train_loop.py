@@ -1,4 +1,5 @@
 import torch.nn as nn
+import aisynth.globals as G
 
 
 def simple_train_loop(trainer: nn.Module, **kwargs) -> float:
@@ -21,7 +22,6 @@ def simple_train_loop(trainer: nn.Module, **kwargs) -> float:
         trainer.optimizer.zero_grad()
         outputs = trainer.model(audio_in)
         loss = trainer.criterion(audio_in, outputs, **kwargs)
-
         loss.backward()
         trainer.optimizer.step()
         running_loss += loss.item()
@@ -30,13 +30,17 @@ def simple_train_loop(trainer: nn.Module, **kwargs) -> float:
 
 def simple_vqvae_loop(trainer: nn.Module, **kwargs) -> float:
     running_loss = 0.0
-    for audio_in, sr in trainer.trainloader:
-        audio_in, sr = audio_in.to(trainer.device), sr.to(trainer.device)
+    for idx, data in enumerate(trainer.trainloader):
+        audio_in, sr = data[0].to(trainer.device), data[1].to(trainer.device)
         trainer.optimizer.zero_grad()
         outputs, embeds, embed_loss, embed_fit = trainer.model(audio_in)
         loss = trainer.criterion(audio_in, outputs, **kwargs) + embed_loss
-        print(f"EMBED LOSS: {embed_loss}")
         loss.backward()
         trainer.optimizer.step()
         running_loss += loss.item()
+
+        trainer.log(loss, "Batch loss", "scalar", step=idx)
+        trainer.log(audio_in[0, :, :], "Audio input example", "audio")
+        trainer.log(outputs[0, :, :], "Audio output example", "audio")
+        trainer.log(embeds.view(-1, embeds.shape[1]*embeds.shape[2]), "Codebook Embedding", "embedding", step=idx)
     return running_loss

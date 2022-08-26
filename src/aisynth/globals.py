@@ -1,5 +1,8 @@
 from torch import rand
 from aisynth.utils import read_yaml
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter('logs')
 
 TEST_INPUTS = {
     "AUDIO_DIR_TEST": [{"audio_dir": r"test_resources/dx7", "duration": 1.0}],

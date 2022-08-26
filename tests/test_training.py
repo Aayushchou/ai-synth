@@ -2,7 +2,7 @@ import pytest
 import torch.nn as nn
 from torch.optim import Adam
 
-from aisynth.train.train import Trainer
+from aisynth.train.trainer import Trainer
 from aisynth.data.dataset import DX7SynthDataset
 from aisynth.model.autoencoder import EncoderBlock1D, DecoderBlock1D
 from aisynth.train.train_loop import simple_train_loop

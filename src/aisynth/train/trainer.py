@@ -1,3 +1,5 @@
+import aisynth.globals as G
+
 import torch.nn as nn
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -55,18 +57,30 @@ class Trainer(nn.Module):
         self.train_loop = train_loop
         self.kwargs = kwargs
         self.criterion = criterion
+        self.writer = G.writer
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)
 
-    def log(self, val: float) -> None:
-        print(f"EPOCH LOSS: {val}")
+    def log(self, val: float or torch.Tensor or nn.Module, label: str, log_type: str, step=None) -> None:
+        if log_type == "scalar":
+            self.writer.add_scalar(label, val, step)
+        elif log_type == "embedding":
+            self.writer.add_embedding(val, global_step=step)
+        elif log_type == "audio":
+            self.writer.add_audio(label, val)
+        elif log_type == "model":
+            self.writer.add_graph(self.model, next(iter(self.trainloader))[0])
+        else:
+            print("please select a valid log type: (scalar, embedding, audio, model)")
 
     def save(self, path: str) -> None:
         torch.save(self.model.state_dict(), path)
 
     def fit(self) -> None:
         self.model.train()
-        for _ in range(self.n_epochs):
+        for i in range(self.n_epochs):
             loss = self.train_loop(self, **self.kwargs)
-            self.log(loss)
+            self.log(loss, "Epoch Loss", "scalar", step=i)
+        self.writer.flush()
+        self.writer.close()

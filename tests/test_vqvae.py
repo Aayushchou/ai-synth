@@ -7,7 +7,7 @@ from aisynth.globals import TEST_INPUTS, VQVAE_CONFIG
 from aisynth.model.autoencoder import EncoderBlock1D, DecoderBlock1D
 from aisynth.model.vqvae import VQVAE
 from aisynth.data.dataset import DX7SynthDataset
-from aisynth.train.train import Trainer
+from aisynth.train.trainer import Trainer
 from aisynth.train.losses import l1_loss
 from aisynth.train.train_loop import simple_vqvae_loop
 
@@ -108,4 +108,5 @@ class TestFullVQVAE:
                           criterion=l1_loss,
                           n_epochs=inputs["training_args"]["n_epochs"],
                           train_loop=simple_vqvae_loop)
+        trainer.log(trainer.model, "VQVAE Model", "model")
         trainer.fit()

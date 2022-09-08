@@ -1,5 +1,4 @@
 import torch.nn as nn
-import aisynth.globals as G
 
 
 def simple_train_loop(trainer: nn.Module, **kwargs) -> float:

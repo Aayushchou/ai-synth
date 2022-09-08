@@ -24,7 +24,7 @@ class Trainer(nn.Module):
 
     functions:
         forward: run the trained model on an input sample
-        log: print outputs to see training progress. TODO: add tensorboard support.
+        log: print outputs to see training progress.
         save: save/checkpoint the model to a given location.
         fit: run training, fit the model based on the params provided.
     """
@@ -74,8 +74,12 @@ class Trainer(nn.Module):
         else:
             print("please select a valid log type: (scalar, embedding, audio, model)")
 
-    def save(self, path: str) -> None:
-        torch.save(self.model.state_dict(), path)
+    def save_checkpoint(self, path: str) -> None:
+
+        with torch.no_grad():
+            torch.save({'model': self.model.state_dict(),  # should also save bottleneck k's as buffers
+                        'opt': self.optimizer.state_dict() if self.optimizer is not None else None,
+                        **self.kwargs}, path)
 
     def fit(self) -> None:
         self.model.train()
